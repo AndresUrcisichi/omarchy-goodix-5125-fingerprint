@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Type = Package
+Target = libfprint
+Target = glib2
+
+[Action]
+Description = Rebuilding Goodix goodixgf fingerprint driver and glib shims
+When = PostTransaction
+Exec = /usr/local/bin/goodix-maintain.sh
