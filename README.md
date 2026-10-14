@@ -6,6 +6,8 @@ Habilita el lector de huella **Goodix `27c6:5125`** (Huawei MateBook y otros lap
 > [`Rockytkg/goodix-linux-27c6-5125`](https://github.com/Rockytkg/goodix-linux-27c6-5125) (userspace C: libusb + TLS-PSK + matching SIGFM)
 > y agrega la capa que falta para Omarchy: instalación reproducible, integración PAM y auto-reparación tras cada `pacman -Syu`.
 
+> 🤖 **¿Eres un agente de IA ayudando a alguien?** Lee [`AGENTS.md`](AGENTS.md): protocolo de diagnóstico por fases, matriz de síntomas → reparación, reglas de seguridad (firmware, PSK/dual-boot, PAM) y criterio de aceptación.
+
 ---
 
 ## Qué hace
