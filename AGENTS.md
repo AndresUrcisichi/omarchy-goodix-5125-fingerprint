@@ -50,9 +50,16 @@ strings /usr/lib/libfprint-2.so.2 | grep -m1 goodixgf || echo "STOCK libfprint (
 # E. Driver state files
 ls -la /var/lib/fprint/goodix/ 2>/dev/null   # goodix.dat must exist after first init
 
+```bash
 # F. Recent errors
 journalctl -u fprintd -b --no-pager | tail -50
 journalctl -t goodix-maintain -b --no-pager | tail -20
+
+# G. USB autosuspend state (deadlock culprit after suspend/resume cycles)
+for d in /sys/bus/usb/devices/*/; do
+  [ "$(cat "$d/idVendor" 2>/dev/null)" = 27c6 ] || continue
+  echo "$d control=$(cat "$d/power/control" 2>/dev/null) status=$(cat "$d/power/runtime_status" 2>/dev/null)"
+done
 ```
 
 ## Phase 2 — Diagnosis matrix
@@ -71,6 +78,8 @@ Map evidence to a case, then jump to the repair. Do not improvise around the mat
 | sudo prompts password, no finger prompt | PAM line missing or after `pam_unix` | Check Phase 1 E-adjacent: `grep pam_fprintd /etc/pam.d/sudo`; fix order (must be first auth line) |
 | pacman hook didn't fire after upgrade | Hook/maintainer missing | Verify `/etc/pacman.d/hooks/goodix-fprint.hook` + `/usr/local/bin/goodix-maintain.sh` exist and REPO path is right |
 | `meson setup` fails: `glib_mkenums ... erroneous value` | glib shims missing (glib2 ≥ 2.88 Arch) | Install `shims/glib-mkenums` + `shims/glib-genmarshal` to `/usr/bin` (from this repo), rerun install |
+| C ok, D ok, enroll works, `fprintd-verify` → `verify-match` works, but journal shows `Cannot run while suspended` / `device is still busy` and G shows `control=auto` | USB autosuspend deadlock: sensor sleeps between operations, goodixgf cannot resume it | Install `scripts/40-goodix-5125-power.rules` to `/etc/udev/rules.d/`, `udevadm control --reload-rules`, `echo on > .../power/control`, `systemctl restart fprintd`; if still stuck, re-authorize the USB device (`authorized 0` → `1`) |
+| Journal: repeated `no image frame received` while the user IS touching the reader | Device asleep or FDT interrupt not firing | Check G: `control=on` (apply udev rule if not). If on and it persists, USB re-enumeration (`authorized 0` → `1`), restart fprintd, retry |
 | Every verify returns `sigfm score 0/20` immediately | Air capture, finger not detected | User technique: press firmly 1-2 s; check journal for `finger down` events; if none, FDT calibration — re-run `goodix-cli --info` after stopping fprintd |
 
 ## Phase 3 — Debug scoring (when matches fail)
@@ -105,6 +114,7 @@ A repair is done only when ALL of these pass:
 3. `grep pam_fprintd /etc/pam.d/sudo` returns the `sufficient` line (first auth line).
 4. User confirms: `sudo -k && sudo echo ok` in their own terminal → finger prompt → `ok`.
 5. (Omarchy) `omarchy-shell lock status` → after locking once, `"fingerprint":true`.
+6. USB autosuspend disabled for the sensor: udev rule `/etc/udev/rules.d/40-goodix-5125-power.rules` present and the live device reports `control=on`.
 
 Report to the user: what failed, what you changed (files + backups), what passed.
 

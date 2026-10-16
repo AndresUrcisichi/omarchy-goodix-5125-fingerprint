@@ -15,6 +15,10 @@ REPO_DIR="${TARGET_HOME}/.local/share/goodix-5125/goodix-linux-27c6-5125"
 echo "==> Removing pacman hook and maintainer"
 rm -f /etc/pacman.d/hooks/goodix-fprint.hook /usr/local/bin/goodix-maintain.sh
 
+echo "==> Removing udev autosuspend rule"
+rm -f /etc/udev/rules.d/40-goodix-5125-power.rules
+udevadm control --reload-rules 2>/dev/null || true
+
 echo "==> Restoring /etc/pam.d/sudo from backup"
 [[ -f /etc/pam.d/sudo.bak-goodix ]] && cp /etc/pam.d/sudo.bak-goodix /etc/pam.d/sudo \
   || sed -i '/pam_fprintd/d' /etc/pam.d/sudo

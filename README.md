@@ -19,6 +19,7 @@ Habilita el lector de huella **Goodix `27c6:5125`** (Huawei MateBook y otros lap
 | 3 | **Desbloqueo de pantalla** | Omarchy: crea `/etc/pam.d/omarchy-lock-fingerprint` vía `omarchy-apply-lock` (soporte nativo). Otros setups: nota en `docs/how-it-works.md` |
 | 4 | **Persistencia ante pacman** | Hook de pacman (`/etc/pacman.d/hooks/goodix-fprint.hook`) que tras cada upgrade de `libfprint` o `glib2` re-instala el fork, restaura los shims de glib y reinicia `fprintd` |
 | 5 | **Shims glib** | glib2 ≥ 2.88 (Arch) ya no incluye `glib-mkenums`/`glib-genmarshal` aunque el `.pc` los declara; este repo los incluye y el hook los restaura si pacman los pisa |
+| 6 | **Sin autosuspend USB** | Regla udev que desactiva el autosuspend del sensor (`/etc/udev/rules.d/40-goodix-5125-power.rules`); el driver no re-despierta un sensor suspendido y tras ciclos de suspensión fprintd se atasca ("Cannot run while suspended") |
 
 ## Hardware soportado
 

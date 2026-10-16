@@ -79,7 +79,20 @@ else
   log "Not Omarchy: see docs/how-it-works.md for hyprlock/swaylock PAM integration"
 fi
 
-# ---------- 7. pacman hook: survive every pacman -Syu ----------
+# ---------- 7. udev rule: disable USB autosuspend for the sensor ----------
+# Without this, after suspend/resume cycles the sensor ends up runtime-suspended
+# and fprintd deadlocks ("Cannot run while suspended" / "device is still busy").
+install -m 644 "${HERE}/scripts/40-goodix-5125-power.rules" /etc/udev/rules.d/40-goodix-5125-power.rules
+udevadm control --reload-rules
+for dev in /sys/bus/usb/devices/*/; do
+  if [[ $(cat "${dev}idVendor" 2>/dev/null) == 27c6 ]] \
+     && [[ $(cat "${dev}idProduct" 2>/dev/null) == 5125 || $(cat "${dev}idProduct" 2>/dev/null) == 5135 ]]; then
+    echo on > "${dev}power/control" 2>/dev/null || true
+  fi
+done
+log "udev rule installed (USB autosuspend disabled for 27c6:5125/5135)"
+
+# ---------- 8. pacman hook: survive every pacman -Syu ----------
 install -m 755 "${HERE}/scripts/goodix-maintain.sh" /usr/local/bin/goodix-maintain.sh
 sed -i "s|^REPO=.*|REPO=\"${REPO_DIR}\"|" /usr/local/bin/goodix-maintain.sh
 install -m 644 "${HERE}/scripts/goodix-fprint.hook" /etc/pacman.d/hooks/goodix-fprint.hook

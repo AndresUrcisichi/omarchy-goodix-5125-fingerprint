@@ -1,0 +1,7 @@
+# Goodix fingerprint sensor: disable USB runtime autosuspend.
+# The goodixgf driver cannot reliably resume a runtime-suspended sensor: after
+# suspend/resume cycles fprintd gets stuck with "Cannot run while suspended" /
+# "The device is still busy with another operation" and every capture logs
+# "no image frame received (finger not detected?)". Keep the device always on.
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="27c6", ATTR{idProduct}=="5125", ATTR{power/control}="on"
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="27c6", ATTR{idProduct}=="5135", ATTR{power/control}="on"
